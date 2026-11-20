@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Verificación de certificados CIM 2026</title>
+<style>
+  body{font-family:Calibri,Arial,sans-serif;margin:0;padding:16px;color:#222;background:#fff}
+  main{max-width:520px;margin:0 auto}
+  h1{font-size:20px;color:#4a1648;margin:0 0 4px}
+  p.sub{margin:0 0 16px;color:#555;font-size:14px}
+  input{width:100%;box-sizing:border-box;font-size:18px;padding:10px;border:1px solid #888;border-radius:6px;letter-spacing:1px}
+  button{margin-top:10px;width:100%;font-size:16px;padding:10px;border:0;border-radius:6px;background:#4a1648;color:#fff;cursor:pointer}
+  #res{margin-top:16px;padding:14px;border-radius:6px;display:none;line-height:1.5}
+  .valido{background:#e8f5e9;border-left:6px solid #2e7d32}
+  .anulado{background:#fff3e0;border-left:6px solid #e65100}
+  .nada{background:#fdecea;border-left:6px solid #c62828}
+  dt{font-size:12px;color:#555;margin-top:8px} dd{margin:0;font-size:16px}
+  small{display:block;margin-top:14px;color:#666;font-size:12px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Verificación de certificados</h1>
+  <p class="sub">II Congreso Internacional Multidisciplinario (CIM 2026)</p>
+  <label for="c">Código impreso bajo el QR</label>
+  <input id="c" type="text" autocomplete="off" placeholder="CIM26-XXXX-XXXX">
+  <button id="b" type="button">Verificar</button>
+  <div id="res" role="status"></div>
+  <small>Esta consulta confirma que el certificado figura en el registro de la organización. No constituye firma electrónica.</small>
+</main>
+<script>
+  // La consulta va SIN cookies (credentials:'omit'): así no depende de qué cuentas de Google tenga abiertas el visitante.
+  var URL_APP = 'https://script.google.com/macros/s/AKfycbzJt4C_S-e0eIXiNGg83ubMGAs6JYDzpPVNjrLRmAeahh-qEH770mmiQtws3TbqrssOPQ/exec';
+  var res = document.getElementById('res'), inp = document.getElementById('c');
+  function fila(dl, t, v) { if (!v) return; var a = document.createElement('dt'); a.textContent = t; var b = document.createElement('dd'); b.textContent = v; dl.appendChild(a); dl.appendChild(b); }
+  function mostrar(r) {
+    res.style.display = 'block'; res.textContent = '';
+    var h = document.createElement('strong');
+    if (r.resultado === 'valido' || r.resultado === 'anulado') {
+      res.className = r.resultado;
+      h.textContent = r.resultado === 'valido' ? 'Certificado válido' : 'Certificado ANULADO';
+      var dl = document.createElement('dl');
+      fila(dl, 'Nombre', r.nombre); fila(dl, 'Tipo', r.tipo); fila(dl, 'Detalle', r.detalle); fila(dl, 'Evento', r.evento); fila(dl, 'Fecha', r.fecha);
+      res.appendChild(h); res.appendChild(dl);
+    } else {
+      res.className = 'nada';
+      h.textContent = r.resultado === 'error' ? 'No se pudo consultar en este momento. Intente de nuevo más tarde.' : 'No se encontró ningún certificado con ese código.';
+      res.appendChild(h);
+    }
+  }
+  function verificar() {
+    var v = inp.value.trim(); if (!v) return;
+    fetch(URL_APP + '?formato=json&cod=' + encodeURIComponent(v), { credentials: 'omit' })
+      .then(function (r) { return r.json(); }).then(mostrar)
+      .catch(function () { mostrar({ resultado: 'error' }); });
+  }
+  document.getElementById('b').onclick = verificar;
+  inp.onkeydown = function (e) { if (e.key === 'Enter') verificar(); };
+  inp.value = (new URLSearchParams(location.search).get('cod') || '').replace(/[^A-Za-z0-9\-]/g, '');
+  if (inp.value) verificar();
+</script>
+</body>
+</html>
